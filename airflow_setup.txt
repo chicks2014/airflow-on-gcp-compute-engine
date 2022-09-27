@@ -1,0 +1,67 @@
+------------------------------
+Upgrade OS and install python3
+------------------------------
+sudo apt update
+sudo apt -y upgrade
+sudo apt-get install wget
+sudo apt install -y python3-pip
+
+------------------------------
+Install miniconda3 for virtual env
+------------------------------
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh 
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+~/miniconda3/bin/conda init bash
+~/miniconda3/bin/conda init zsh
+
+------------------------------
+Create virtual env
+------------------------------
+mkdir air_env
+cd air_env 
+pwd #important for setting AIRFLOW HOME variable export AIRFLOW_HOME=/home/your_user_account/air_env
+conda create --name air_env python=3.8
+conda activate air_env
+
+------------------------------
+Install Airflow
+------------------------------
+AIRFLOW_VERSION=2.0.1
+PYTHON_VERSION=3.8
+CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+pip install "apache-airflow[gcp]==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+pip install pyspark==2.4.5
+pip install cryptography==2.9.2
+
+--------------------------------------------------------
+Initialize the airflow db and create a first admin user
+-------------------------------------------------------
+airflow db init
+airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@airflow.com
+
+---------------------------------------
+Start airflow webserver with port 8080
+---------------------------------------
+airflow webserver -p 8080
+
+-------------------------------------------
+Start airflow scheduler - open new terminal
+-------------------------------------------
+export AIRFLOW_HOME=/home/your_user_account/air_env 
+cd air_env 
+conda activate air_env
+airflow db init
+airflow scheduler
+
+---------------------------------------------------------------------------------------------------------------------
+For next time when you want to start airflow webserver and scheduler, just copy below cmds in .sh file and run on vm
+---------------------------------------------------------------------------------------------------------------------
+
+#!/bin/bash
+export AIRFLOW_HOME=/home/your_user_account/air_env
+cd /home/your_user_account/air_env
+conda activate /home/your_user_account/miniconda3/envs/air_env
+nohup airflow scheduler >> scheduler.log &
+nohup airflow webserver -p 8080 >> webserver.log &
